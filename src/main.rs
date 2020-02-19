@@ -40,7 +40,7 @@ fn main() -> io::Result<()> {
     // // Start pool
     // pool.serve("127.0.0.1:9898");
 
-    let pool = Pool::new(5);
+    let pool = Pool::new(2);
 
     let listener = TcpListener::bind("127.0.0.1:8000")?;
     for stream in listener.incoming() {

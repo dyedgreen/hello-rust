@@ -69,7 +69,9 @@ impl Worker {
         Worker {
             thread: thread::spawn(move || {
                 loop {
-                    match recv.lock().unwrap().recv().unwrap() {
+                    // assign to var to drop lock after assignment
+                    let msg = recv.lock().unwrap().recv().unwrap();
+                    match msg {
                         Message::Job(job) => {
                             job();
                         },
