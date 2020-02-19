@@ -108,6 +108,7 @@ fn status_reason(status: u32) -> &'static str {
 }
 
 impl Method {
+    #[allow(dead_code)]
     pub fn to_str(&self) -> &str {
         match self {
             Method::Get => "GET",
@@ -118,6 +119,7 @@ impl Method {
         }
     }
 
+    #[allow(dead_code)]
     pub fn is_get(&self) -> bool {
         match self {
             Method::Get => true,
@@ -125,6 +127,7 @@ impl Method {
         }
     }
 
+    #[allow(dead_code)]
     pub fn is_post(&self) -> bool {
         match self {
             Method::Post => true,
@@ -132,6 +135,7 @@ impl Method {
         }
     }
 
+    #[allow(dead_code)]
     pub fn is_put(&self) -> bool {
         match self {
             Method::Put => true,
@@ -139,6 +143,7 @@ impl Method {
         }
     }
 
+    #[allow(dead_code)]
     pub fn is_delete(&self) -> bool {
         match self {
             Method::Delete => true,
@@ -204,22 +209,27 @@ impl Request {
         Ok(req)
     }
 
+    #[allow(dead_code)]
     pub fn method(&self) -> &Method {
         &self.method
     }
 
+    #[allow(dead_code)]
     pub fn location(&self) -> &String {
         &self.location
     }
 
+    #[allow(dead_code)]
     pub fn header(&self, key: &String) -> Option<&String> {
         self.headers.get(key)
     }
 
+    #[allow(dead_code)]
     pub fn body(&self) -> Option<String> {
         self.body.as_ref().map(|bytes| String::from_utf8_lossy(&bytes).to_string())
     }
 
+    #[allow(dead_code)]
     pub fn body_bytes(&self) -> Option<&Vec<u8>> {
         self.body.as_ref()
     }
@@ -234,6 +244,7 @@ impl<W: Write> Response<W> {
     }
 
     /// Set the specified status
+    #[allow(dead_code)]
     pub fn status(&mut self, status: u32) -> io::Result<()> {
         if status >= 600 {
             return Err(Error::new(ErrorKind::InvalidData, "invalid status code"));
@@ -245,6 +256,7 @@ impl<W: Write> Response<W> {
     }
 
     /// Set the specified header
+    #[allow(dead_code)]
     pub fn header(&mut self, key: String, val: String) -> io::Result<()> {
         if self.dirty {
             return Err(Error::new(ErrorKind::AlreadyExists, "status already written to client"));
@@ -260,6 +272,7 @@ impl<W: Write> Write for Response<W> {
     }
 
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        let mut written = 0;
         if !self.dirty {
             // Send headers
             let mut head = format!("{} {} {}\r\n", HTTP_VERSION, self.status, status_reason(self.status));
@@ -267,10 +280,11 @@ impl<W: Write> Write for Response<W> {
                 head.push_str(&format!("{}: {}\r\n", key, val));
             }
             head.push_str("\r\n");
-            self.socket.write(head.as_bytes());
+            written += self.socket.write(head.as_bytes())?;
             self.dirty = true;
         }
         // Send buffer
-        self.socket.write(buf)
+        written += self.socket.write(buf)?;
+        Ok(written)
     }
 }
