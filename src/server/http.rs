@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::io;
 use std::io::{BufRead, BufReader, Error, ErrorKind, Read, Write};
-use std::net::TcpStream;
 
 const HTTP_VERSION: &'static str = "HTTP/1.1";
 
@@ -161,7 +160,7 @@ impl Method {
 impl Request {
     /// Read request from incoming tcp stream and
     /// return the assembled request.
-    pub fn from_stream(stream: &TcpStream) -> io::Result<Request> {
+    pub fn from_stream<T: Read>(stream: T) -> io::Result<Request> {
         let mut req = Request {
             method: Method::Get,
             location: String::new(),
