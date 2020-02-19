@@ -1,12 +1,18 @@
-use std::io;
-use std::io::{Error, ErrorKind, BufRead, BufReader, Read, Write};
-use std::net::TcpStream;
 use std::collections::HashMap;
+use std::io;
+use std::io::{BufRead, BufReader, Error, ErrorKind, Read, Write};
+use std::net::TcpStream;
 
 const HTTP_VERSION: &'static str = "HTTP/1.1";
 
 #[derive(Debug)]
-pub enum Method { Get, Post, Put, Delete, Unknown(String) }
+pub enum Method {
+    Get,
+    Post,
+    Put,
+    Delete,
+    Unknown(String),
+}
 
 #[derive(Debug)]
 pub struct Request {
@@ -35,11 +41,11 @@ fn parse_start_line(line: String) -> io::Result<(Method, String)> {
 
     return Ok((
         match parts[0] {
-            "GET"    => Method::Get,
-            "POST"   => Method::Post,
-            "PUT"    => Method::Put,
+            "GET" => Method::Get,
+            "POST" => Method::Post,
+            "PUT" => Method::Put,
             "DELETE" => Method::Delete,
-            method   => Method::Unknown(method.to_string()),
+            method => Method::Unknown(method.to_string()),
         },
         parts[1].to_string(),
     ));
@@ -194,7 +200,10 @@ impl Request {
 
         // Read body if Content-Length > 0
         if req.headers.contains_key("Content-Length") {
-            let content_len: usize = req.headers.get("Content-Length").unwrap()
+            let content_len: usize = req
+                .headers
+                .get("Content-Length")
+                .unwrap()
                 .parse()
                 .or_else(|_| Err(Error::new(ErrorKind::InvalidData, "invalid content length")))?;
             if content_len > 0 {
@@ -226,7 +235,9 @@ impl Request {
 
     #[allow(dead_code)]
     pub fn body(&self) -> Option<String> {
-        self.body.as_ref().map(|bytes| String::from_utf8_lossy(&bytes).to_string())
+        self.body
+            .as_ref()
+            .map(|bytes| String::from_utf8_lossy(&bytes).to_string())
     }
 
     #[allow(dead_code)]
@@ -238,8 +249,14 @@ impl Request {
 impl<W: Write> Response<W> {
     /// Construct a new response which writes to socket
     pub fn for_stream(socket: W) -> Response<W> {
-        let mut resp = Response {  status: 200, headers: HashMap::new(), dirty: false, socket };
-        resp.headers.insert("Content-Type".to_string(), "text/plain".to_string());
+        let mut resp = Response {
+            status: 200,
+            headers: HashMap::new(),
+            dirty: false,
+            socket,
+        };
+        resp.headers
+            .insert("Content-Type".to_string(), "text/plain".to_string());
         resp
     }
 
@@ -249,7 +266,10 @@ impl<W: Write> Response<W> {
         if status >= 600 {
             return Err(Error::new(ErrorKind::InvalidData, "invalid status code"));
         } else if self.dirty {
-            return Err(Error::new(ErrorKind::AlreadyExists, "status already written to client"));
+            return Err(Error::new(
+                ErrorKind::AlreadyExists,
+                "status already written to client",
+            ));
         }
         self.status = status;
         Ok(())
@@ -259,7 +279,10 @@ impl<W: Write> Response<W> {
     #[allow(dead_code)]
     pub fn header(&mut self, key: String, val: String) -> io::Result<()> {
         if self.dirty {
-            return Err(Error::new(ErrorKind::AlreadyExists, "status already written to client"));
+            return Err(Error::new(
+                ErrorKind::AlreadyExists,
+                "status already written to client",
+            ));
         }
         self.headers.insert(key, val);
         Ok(())
@@ -275,7 +298,12 @@ impl<W: Write> Write for Response<W> {
         let mut written = 0;
         if !self.dirty {
             // Send headers
-            let mut head = format!("{} {} {}\r\n", HTTP_VERSION, self.status, status_reason(self.status));
+            let mut head = format!(
+                "{} {} {}\r\n",
+                HTTP_VERSION,
+                self.status,
+                status_reason(self.status)
+            );
             for (key, val) in self.headers.iter() {
                 head.push_str(&format!("{}: {}\r\n", key, val));
             }

@@ -3,7 +3,7 @@
 
 use std::io;
 use std::io::Write;
-use std::net::{TcpListener, TcpStream, Shutdown};
+use std::net::{Shutdown, TcpListener, TcpStream};
 
 mod pool;
 use pool::Pool;

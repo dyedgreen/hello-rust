@@ -1,4 +1,4 @@
-use std::sync::mpsc::{channel, Sender, Receiver};
+use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
 
@@ -72,12 +72,8 @@ impl Worker {
                     // assign to var to drop lock after assignment
                     let msg = recv.lock().unwrap().recv().unwrap();
                     match msg {
-                        Message::Job(job) => {
-                            job();
-                        },
-                        Message::Shutdown => {
-                            return;
-                        },
+                        Message::Job(job) => job(),
+                        Message::Shutdown => return,
                     }
                 }
             }),
